@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:english_words/english_words.dart';
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 
 void main() {
@@ -27,6 +30,9 @@ class MyApp extends StatelessWidget {
 }
 
 class MyAppState extends ChangeNotifier {
+  MyAppState() {
+    _loadFavorites();
+  }
   var current = WordPair.random();
   void getNext() {
     current = WordPair.random();
@@ -42,11 +48,42 @@ class MyAppState extends ChangeNotifier {
       favorites.add(current);
     }
     notifyListeners();
+    _saveFavorites();
+  }
+
+  Future<String> get _localPath async {
+    final directory = await getApplicationDocumentsDirectory();
+    return directory.path;
+  }
+
+  Future<File> get _favoritesFile async {
+    final path = await _localPath;
+    return File('$path/favorites.txt');
+  }
+
+  Future<void> _loadFavorites() async {
+    try {
+      final file = await _favoritesFile;
+      final contents = await file.readAsString();
+      favorites = contents
+          .split('\n')
+          .where((line) => line.isNotEmpty)
+          .map((line) => WordPair(line.split(':')[0], line.split(':')[1]))
+          .toList();
+    } catch (e) {}
+  }
+
+  Future<void> _saveFavorites() async {
+    final file = await _favoritesFile;
+    final contents =
+        favorites.map((word) => '${word.first}:${word.second}\n').join();
+    await file.writeAsString(contents);
   }
 
   void Delete(WordPair word) {
     favorites.remove(word);
     notifyListeners();
+    _saveFavorites();
   }
 }
 
