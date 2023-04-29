@@ -58,6 +58,7 @@ class MyAppState extends ChangeNotifier {
 
   Future<String> get _localPath async {
     final directory = await getApplicationDocumentsDirectory();
+    print(directory);
     return directory.path;
   }
 
